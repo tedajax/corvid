@@ -291,12 +291,14 @@ void corvid_line_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t co
 
         int32_t left = min(r.x0, r.x1);
         int32_t right = max(r.x0, r.x1);
+        int32_t top = min(r.y0, r.y1);
+        int32_t bottom = max(r.y0, r.y1);
 
-        _corvid_scanline_unsafe(r.y0, left, right, u32color);
-        _corvid_scanline_unsafe(r.y1, left, right, u32color);
+        _corvid_scanline_unsafe(top, left, right, u32color);
+        _corvid_scanline_unsafe(bottom, left, right, u32color);
 
-        if (r.y1 - r.y0 > 1) {
-            for (int32_t y = r.y0 + 1; y <= r.y1 - 1; ++y) {
+        if (bottom - top > 1) {
+            for (int32_t y = top + 1; y <= bottom - 1; ++y) {
                 *_corvid_get_pixel_unsafe(left, y) = u32color;
                 *_corvid_get_pixel_unsafe(right, y) = u32color;
             }
@@ -306,7 +308,7 @@ void corvid_line_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t co
 
 void corvid_fill_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t color)
 {
-    corvid_rect r = {x0, y0, x1, y1};
+    corvid_rect r = {min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)};
     if (corvid_clip_rect(&r)) {
         int32_t bpp = corvid.screen->format->BytesPerPixel;
         uint32_t u32color = _corvid_get_u32color(color);

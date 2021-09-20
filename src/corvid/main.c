@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
     int32_t frames_this_sec = 0;
     double second_timer = 1.0;
 
+    static float ang = 0.0f;
     corvid_color clear_color = 0;
 
     bool should_run = true;
@@ -32,8 +33,10 @@ int main(int argc, char* argv[])
                     should_run = false;
                 } else if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
                     clear_color -= 1;
+                    ang -= 0.01f;
                 } else if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
                     clear_color += 1;
+                    ang += 0.01f;
                 }
                 break;
             }
@@ -64,17 +67,30 @@ int main(int argc, char* argv[])
             int cy = i / 4;
             corvid_fill_rect(cx * 80, cy * 60, (cx + 1) * 80, (cy + 1) * 60, i);
         }
-        for (int i = 0; i < 16; ++i) {
-            int32_t xx = i * 8;
-            int32_t yy = i * 6;
-            corvid_line_rect(xx, yy, 320 - xx, 240 - yy, i);
-        }
-        corvid_line_circ(160, 120, 32, 8);
+        // for (int i = 0; i < 16; ++i) {
+        //     int32_t xx = i * 8;
+        //     int32_t yy = i * 6;
+        //     corvid_line_rect(xx, yy, 320 - xx, 240 - yy, i);
+        // }
+        // corvid_line_circ(160, 120, 32, 8);
         for (uint8_t i = 0; i < 16; ++i) {
-            float a = t + (i / 16.0f) * (float)M_PI * 2.0f;
+            float a = ang + (i / 16.0f) * (float)M_PI * 2.0f;
             int32_t x = 160;
             int32_t y = 120;
-            corvid_line(x, y, x + (int32_t)(cosf(a) * 32.0f), y + (int32_t)(sinf(a) * 32.0f), i);
+            corvid_line(x, y, x + (int32_t)(cosf(a) * 200.0f), y + (int32_t)(sinf(a) * 200.0f), i);
+        }
+
+        float u = sinf(t);
+        corvid_line_rect(160, 120, (int32_t)(u * 200) + 160, (int32_t)(160 * u) + 120, (int32_t)t);
+        corvid_fill_rect(160, 120, (int32_t)(u * 200) + 160, (int32_t)(160 * u) + 120, (int32_t)t);
+
+        corvid_fill_rect(10, 20, 100, 20, 10);
+
+        for (int32_t y = 0; y < 240; ++y) {
+            float u = t + (y / 30.0f);
+            float xx = sinf(u) * 40.0f;
+            int32_t ix = (int32_t)xx;
+            corvid_line(ix, y, ix + 320, y, (y % 3) + 13);
         }
 
         corvid_present();
