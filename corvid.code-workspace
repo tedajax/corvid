@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"imgui*": "cpp",
+			"compare": "c",
+			"type_traits": "c",
+			"xtr1common": "c",
+			"concepts": "c",
+			"utility": "c",
+			"xstddef": "c",
+			"*.rh": "c"
+		}
+	}
+}
