@@ -3,12 +3,10 @@ param(
     [string] $target,
 
     [ValidateSet("Win32", "Win64", "All")]
-    [Parameter(Mandatory)]
-    [string] $platform,
+    [string] $platform = "All",
     
     [ValidateSet("Debug", "Release", "All")] 
-    [Parameter(Mandatory)]
-    [string] $configuration,
+    [string] $configuration = "All",
     
     [string] $asset_dir = "assets",
     [switch] $clean = $false
@@ -61,18 +59,20 @@ function Invoke-CreateAssetSymlink() {
         return
     }
 
-    # Create symbolic link to the assets directory next to the binary if it does not already exist.
-    Write-Host "Creating symbolic link to assets path..."
+    if (Test-Path -PathType Container $link_dir) {
+        # Create symbolic link to the assets directory next to the binary if it does not already exist.
+        Write-Host "Creating symbolic link to assets path..."
 
-    if (LinkExists) {
-        Write-Host "Skipping creation of symbolic link to asset directory because it already exists."
-    }
-    else {
-        try {
-            New-Item -ItemType SymbolicLink -Path $link_path -Target $link_target -ErrorAction Stop | Out-Null
+        if (LinkExists) {
+            Write-Host "Skipping creation of symbolic link to asset directory because it already exists."
         }
-        catch [System.UnauthorizedAccessException] {
-            Write-Host "The asset pipeline failed to create a symbolic link. Creating a symbolic link in Win10 requires admin access or developer mode to be turned on. Please turn on developer mode and restart."
+        else {
+            try {
+                New-Item -ItemType SymbolicLink -Path $link_path -Target $link_target -ErrorAction Stop | Out-Null
+            }
+            catch [System.UnauthorizedAccessException] {
+                Write-Host "The asset pipeline failed to create a symbolic link. Creating a symbolic link in Win10 requires admin access or developer mode to be turned on. Please turn on developer mode and restart."
+            }
         }
     }
 }
