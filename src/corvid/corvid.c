@@ -16,30 +16,23 @@ corvid_init_desc get_default_config()
                 .color_mode = CorvidColorMode_Palette,
                 .palette =
                     {
-                        .count = 16,
+                        .count = 32,
                         .colors =
                             {
-                                0x00000000,
-                                0x00493c2b,
-                                0x00be2633,
-                                0x00e06f8b,
-                                0x009d9d9d,
-                                0x00a46422,
-                                0x00eb8931,
-                                0x00f7e26b,
-                                0x00ffffff,
-                                0x001b2632,
-                                0x002f484e,
-                                0x0044891a,
-                                0x00a3ce27,
-                                0x00005784,
-                                0x0031a2f2,
-                                0x00b2dcef,
+                                0x000000, 0x493c2b, 0xbe2633, 0xe06f8b, 0xa46422, 0xeb8931,
+                                0xf7e26b, 0xffffff, 0x9d9d9d, 0x2f484e, 0x1b2632, 0x44891a,
+                                0xa3ce27, 0x005784, 0x31a2f2, 0xb2dcef, 0x342a97, 0x656d71,
+                                0xcccccc, 0x732930, 0xcb43a7, 0x524f40, 0xad9d33, 0xec4700,
+                                0xfab40b, 0x115e33, 0x14807e, 0x15c2a5, 0x225af6, 0x9964f9,
+                                0xf78ed6, 0xf4b990,
                             },
                     },
             },
     };
 }
+
+// TODO: make dynamic based on palette size
+#define CORVID_COLOR_MASK 0x1F
 
 // corvid runtime structure
 struct corvid {
@@ -107,7 +100,7 @@ void corvid_init(const corvid_init_desc* desc)
         0x00ff0000,
         0x0000ff00,
         0x000000ff);
-    SDL_SetSurfaceBlendMode(corvid.screen, SDL_BLENDMODE_NONE);
+    // SDL_SetSurfaceBlendMode(corvid.screen, SDL_BLENDMODE_NONE);
 
     SDL_Color colors[256] = {0};
     uint8_t color_count = config.video.palette.count;
@@ -117,7 +110,7 @@ void corvid_init(const corvid_init_desc* desc)
             .r = (col & 0x00FF0000) >> 16,
             .g = (col & 0x0000FF00) >> 8,
             .b = (col & 0x000000FF),
-            .a = 255,
+            .a = 0xFF,
         };
     }
 
@@ -198,13 +191,29 @@ void corvid_fill_circ(int32_t x, int32_t y, int32_t r, corvid_color color)
     _vbuf_fill_circ(x, y, r, _corvid_get_u32color(color));
 }
 
+void corvid_draw_sprite(sprite_handle sprite_h, int32_t x, int32_t y)
+{
+    SDL_Surface* surface = get_sprite_surface(sprite_h);
+
+    SDL_Rect* rect = get_sprite_rect(sprite_h);
+
+    SDL_Rect dst_rect = (SDL_Rect){
+        .x = x,
+        .y = y,
+        .w = rect->w,
+        .h = rect->h,
+    };
+
+    SDL_BlitSurface(surface, rect, corvid.screen, &dst_rect);
+}
+
 // Private API Implementation
 corvid_color _corvid_get_u32color(corvid_color color)
 {
     if (corvid.config.video.color_mode == CorvidColorMode_RGB) {
         return color;
     } else {
-        color &= 0xF; // FIX ME
+        color &= CORVID_COLOR_MASK; // FIX ME
         return corvid.config.video.palette.colors[color];
     }
 }

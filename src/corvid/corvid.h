@@ -1,6 +1,7 @@
 #pragma once
 
 #include "corvid_system.h"
+#include "sprites.h"
 
 typedef uint32_t corvid_color;
 
@@ -56,3 +57,4 @@ void corvid_line_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, corvid_col
 void corvid_fill_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, corvid_color color);
 void corvid_line_circ(int32_t x, int32_t y, int32_t r, corvid_color color);
 void corvid_fill_circ(int32_t x, int32_t y, int32_t r, corvid_color color);
+void corvid_draw_sprite(sprite_handle sprite_h, int32_t x, int32_t y);

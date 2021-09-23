@@ -1,21 +1,27 @@
 #include "corvid.h"
+#include "tx_rand.h"
 #include <SDL2/SDL.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-void test_pattern(float t);
+void test_pattern(float t, sprite_handle spr);
 
 int main(int argc, char* argv[])
 {
     SDL_Window* window =
-        SDL_CreateWindow("corvid", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 960, 0);
+        SDL_CreateWindow("corvid", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 1200, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* screen_tex = NULL;
 
     corvid_init(NULL);
+    sprite_handle test_sprite_h = load_image_as_sprite("assets/test00.png");
+
+    txrng_seed((uint32_t)time(NULL));
 
     screen_tex = SDL_CreateTextureFromSurface(renderer, corvid_get_screen_surface());
 
@@ -40,14 +46,19 @@ int main(int argc, char* argv[])
                 should_run = false;
                 break;
             case SDL_KEYDOWN:
-                if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                switch (event.key.keysym.scancode) {
+                case SDL_SCANCODE_ESCAPE:
                     should_run = false;
-                } else if (event.key.keysym.scancode == SDL_SCANCODE_P) {
+                    break;
+                case SDL_SCANCODE_P:
                     is_paused = !is_paused;
-                } else if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+                    break;
+                case SDL_SCANCODE_LEFT:
                     t -= 1.0f / 144.0f;
-                } else if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+                    break;
+                case SDL_SCANCODE_RIGHT:
                     t += 1.0f / 144.0f;
+                    break;
                 }
                 break;
             }
@@ -74,7 +85,7 @@ int main(int argc, char* argv[])
 
         if (!is_paused) t += (float)dt;
 
-        test_pattern(t);
+        test_pattern(t, test_sprite_h);
 
         SDL_Surface* screen = corvid_get_screen_surface();
         SDL_LockSurface(screen);
@@ -94,28 +105,31 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void test_pattern(float t)
+void test_pattern(float t, sprite_handle spr)
 {
     corvid_clear(0);
 
-    for (int i = 0; i < 16; ++i) {
-        int cx = i % 4;
-        int cy = i / 4;
-        corvid_fill_rect(cx * 80, cy * 60, (cx + 1) * 80, (cy + 1) * 60, i);
+    for (int i = 0; i < 32; ++i) {
+        int cx = i % 8;
+        int cy = i / 8;
+        corvid_fill_rect(cx * 40, cy * 60, (cx + 1) * 40, (cy + 1) * 60, i);
     }
+
     for (int32_t y = 0; y < 240; ++y) {
         float u = t + (y / 30.0f);
         float xx = sinf(u) * 40.0f;
         int32_t ix = (int32_t)xx;
         corvid_line(160 - ix, y, ix + 160, y, (y % 3) + 13);
     }
-    for (int i = 0; i < 16; ++i) {
-        int32_t xx = i * 8;
-        int32_t yy = i * 6;
+
+    for (int i = 0; i < 32; ++i) {
+        int32_t xx = i * 4;
+        int32_t yy = i * 3;
         corvid_line_rect(xx, yy, 320 - xx, 240 - yy, i);
     }
-    for (uint8_t i = 0; i < 16; ++i) {
-        float a = t + (i / 16.0f) * (float)M_PI * 2.0f;
+
+    for (uint8_t i = 0; i < 32; ++i) {
+        float a = t + (i / 32.0f) * (float)M_PI * 2.0f;
         int32_t x = 160;
         int32_t y = 120;
         corvid_line(x, y, x + (int32_t)(cosf(a) * 200.0f), y + (int32_t)(sinf(a) * 200.0f), i);
@@ -143,4 +157,6 @@ void test_pattern(float t)
             cnum++;
         }
     }
+
+    // corvid_draw_sprite(spr, 0, 0);
 }
