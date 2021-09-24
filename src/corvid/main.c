@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 void test_pattern(float t, sprite_handle spr)
 {
     corvid_clear(0);
-
+#if 1
     for (int i = 0; i < 32; ++i) {
         int cx = i % 8;
         int cy = i / 8;
@@ -157,6 +157,11 @@ void test_pattern(float t, sprite_handle spr)
             cnum++;
         }
     }
+#endif
 
-    // corvid_draw_sprite(spr, 0, 0);
+    for (int32_t i = 0; i < 16; ++i) {
+        int32_t sx = (i % 4) * 16;
+        int32_t sy = (i / 4) * 16;
+        corvid_draw_sprite(spr, sx, sy);
+    }
 }

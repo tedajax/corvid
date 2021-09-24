@@ -19,12 +19,13 @@ corvid_init_desc get_default_config()
                         .count = 32,
                         .colors =
                             {
-                                0x000000, 0x493c2b, 0xbe2633, 0xe06f8b, 0xa46422, 0xeb8931,
-                                0xf7e26b, 0xffffff, 0x9d9d9d, 0x2f484e, 0x1b2632, 0x44891a,
-                                0xa3ce27, 0x005784, 0x31a2f2, 0xb2dcef, 0x342a97, 0x656d71,
-                                0xcccccc, 0x732930, 0xcb43a7, 0x524f40, 0xad9d33, 0xec4700,
-                                0xfab40b, 0x115e33, 0x14807e, 0x15c2a5, 0x225af6, 0x9964f9,
-                                0xf78ed6, 0xf4b990,
+                                0xff000000, 0xff493c2b, 0xffbe2633, 0xffe06f8b, 0xffa46422,
+                                0xffeb8931, 0xfff7e26b, 0xffffffff, 0xff9d9d9d, 0xff2f484e,
+                                0xff1b2632, 0xff44891a, 0xffa3ce27, 0xff005784, 0xff31a2f2,
+                                0xffb2dcef, 0xff342a97, 0xff656d71, 0xffcccccc, 0xff732930,
+                                0xffcb43a7, 0xff524f40, 0xffad9d33, 0xffec4700, 0xfffab40b,
+                                0xff115e33, 0xff14807e, 0xff15c2a5, 0xff225af6, 0xff9964f9,
+                                0xfff78ed6, 0xfff4b990,
                             },
                     },
             },
@@ -91,16 +92,8 @@ void corvid_init(const corvid_init_desc* desc)
 
     corvid.magic = 0xB12DF00D;
 
-    corvid.screen = SDL_CreateRGBSurface(
-        0,
-        config.video.buffer.width,
-        config.video.buffer.height,
-        32,
-        0xff000000,
-        0x00ff0000,
-        0x0000ff00,
-        0x000000ff);
-    // SDL_SetSurfaceBlendMode(corvid.screen, SDL_BLENDMODE_NONE);
+    corvid.screen = SDL_CreateRGBSurfaceWithFormat(
+        0, config.video.buffer.width, config.video.buffer.height, 32, SDL_PIXELFORMAT_RGBA32);
 
     SDL_Color colors[256] = {0};
     uint8_t color_count = config.video.palette.count;
@@ -110,7 +103,7 @@ void corvid_init(const corvid_init_desc* desc)
             .r = (col & 0x00FF0000) >> 16,
             .g = (col & 0x0000FF00) >> 8,
             .b = (col & 0x000000FF),
-            .a = 0xFF,
+            .a = (col & 0xFF000000) >> 24,
         };
     }
 
@@ -311,12 +304,15 @@ void _vbuf_line_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t u3
 
 void _vbuf_fill_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t u32color)
 {
-    corvid_rect r = {min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)};
-    if (_vbuf_clip_rect(&r)) {
-        for (int32_t y = r.y0; y <= r.y1; ++y) {
-            _vbuf_scanline_unsafe(y, r.x0, r.x1, u32color);
-        }
-    }
+    // corvid_rect r = {min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)};
+    // if (_vbuf_clip_rect(&r)) {
+    //     for (int32_t y = r.y0; y <= r.y1; ++y) {
+    //         _vbuf_scanline_unsafe(y, r.x0, r.x1, u32color);
+    //     }
+    // }
+
+    SDL_Rect sdl_rect = (SDL_Rect){.x = x0, .y = y0, .w = (x1 - x0), .h = (y1 - y0)};
+    SDL_FillRect(corvid.screen, &sdl_rect, u32color);
 }
 
 void _vbuf_line_circ(int32_t x, int32_t y, int32_t r, uint32_t u32color)

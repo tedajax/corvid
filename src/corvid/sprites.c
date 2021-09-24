@@ -2,6 +2,8 @@
 #include "stb_image.h"
 #include "tx_rand.h"
 #include <SDL2/SDL.h>
+#include <stdlib.h>
+#include <string.h>
 
 enum {
     k_max_sprites = 128,
@@ -59,38 +61,13 @@ sprite_handle load_image_as_sprite(const char* filename)
         return k_invalid;
     }
 
-    uint32_t masks[4] = {
-        0x000000FF,
-        0x0000FF00,
-        0x00FF0000,
-        0xFF000000,
-    };
+    uint32_t rmask = 0x000000FF;
+    uint32_t gmask = 0x0000FF00;
+    uint32_t bmask = 0x00FF0000;
+    uint32_t amask = 0xFF000000;
 
-    SDL_Surface* surface = NULL;
-    int safety = 1000;
-
-    while (!surface && safety > 0) {
-        // --safety;
-        int idx[4] = {0, 1, 2, 3};
-        // for (int i = 0; i < 3; ++i) {
-        //     int j = (int)(txrng_next() * (4 - i));
-        //     int t = idx[i];
-        //     idx[i] = idx[j];
-        //     idx[j] = t;
-        // }
-
-        // for i from 0 to n−2 do
-        //  j ← random integer such that i ≤ j < n
-        //  exchange a[i] and a[j]
-
-        uint32_t rmask = masks[idx[0]];
-        uint32_t gmask = masks[idx[1]];
-        uint32_t bmask = masks[idx[2]];
-        uint32_t amask = masks[idx[3]];
-
-        surface =
-            SDL_CreateRGBSurfaceFrom(data, w, h, chan * 8, chan * w, rmask, gmask, bmask, amask);
-    }
+    SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+        data, w, h, chan * 8, chan * w, SDL_PIXELFORMAT_ARGB8888);
 
     if (!surface) {
         stbi_image_free(data);
@@ -98,12 +75,16 @@ sprite_handle load_image_as_sprite(const char* filename)
     }
 
     SDL_Surface* screen = corvid_get_screen_surface();
-    // SDL_Surface* optimized = SDL_ConvertSurface(surface, screen->format, 0);
 
-    // if (optimized) {
-    //     SDL_FreeSurface(surface);
-    //     surface = optimized;
-    // }
+    const bool optimize = true;
+    if (optimize) {
+        SDL_Surface* optimized = SDL_ConvertSurface(surface, screen->format, 0);
+
+        if (optimized) {
+            SDL_FreeSurface(surface);
+            surface = optimized;
+        }
+    }
 
     sprite->surface = surface;
     sprite->rect = (SDL_Rect){.x = 0, .y = 0, .w = w, .h = h};
