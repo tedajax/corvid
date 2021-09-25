@@ -17,3 +17,6 @@
 #define STRPOOL_U64 uint64_t
 #define STRPOOL_IMPLEMENTATION
 #include "strpool.h"
+
+#define JO_MPEG_IMPLEMENTATION
+#include "jo_mpeg.h"

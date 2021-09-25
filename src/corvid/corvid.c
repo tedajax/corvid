@@ -95,6 +95,8 @@ void corvid_init(const corvid_init_desc* desc)
     corvid.screen = SDL_CreateRGBSurfaceWithFormat(
         0, config.video.buffer.width, config.video.buffer.height, 32, SDL_PIXELFORMAT_RGBA32);
 
+    SDL_SetSurfaceBlendMode(corvid.screen, SDL_BLENDMODE_BLEND);
+
     SDL_Color colors[256] = {0};
     uint8_t color_count = config.video.palette.count;
     for (uint8_t i = 0; i < color_count; ++i) {
@@ -304,15 +306,12 @@ void _vbuf_line_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t u3
 
 void _vbuf_fill_rect(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32_t u32color)
 {
-    // corvid_rect r = {min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)};
-    // if (_vbuf_clip_rect(&r)) {
-    //     for (int32_t y = r.y0; y <= r.y1; ++y) {
-    //         _vbuf_scanline_unsafe(y, r.x0, r.x1, u32color);
-    //     }
-    // }
-
-    SDL_Rect sdl_rect = (SDL_Rect){.x = x0, .y = y0, .w = (x1 - x0), .h = (y1 - y0)};
-    SDL_FillRect(corvid.screen, &sdl_rect, u32color);
+    corvid_rect r = {min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)};
+    if (_vbuf_clip_rect(&r)) {
+        for (int32_t y = r.y0; y <= r.y1; ++y) {
+            _vbuf_scanline_unsafe(y, r.x0, r.x1, u32color);
+        }
+    }
 }
 
 void _vbuf_line_circ(int32_t x, int32_t y, int32_t r, uint32_t u32color)

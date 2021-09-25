@@ -1,13 +1,15 @@
 #include "corvid.h"
+#include "corvid_rec.h"
 #include "tx_rand.h"
 #include <SDL2/SDL.h>
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 void test_pattern(float t, sprite_handle spr);
 
@@ -19,6 +21,7 @@ int main(int argc, char* argv[])
     SDL_Texture* screen_tex = NULL;
 
     corvid_init(NULL);
+    corvid_rec_init(NULL);
     sprite_handle test_sprite_h = load_image_as_sprite("assets/test00.png");
 
     txrng_seed((uint32_t)time(NULL));
@@ -59,6 +62,9 @@ int main(int argc, char* argv[])
                 case SDL_SCANCODE_RIGHT:
                     t += 1.0f / 144.0f;
                     break;
+                case SDL_SCANCODE_F9:
+                    corvid_rec_write_video("assets/test.mpg");
+                    break;
                 }
                 break;
             }
@@ -86,6 +92,8 @@ int main(int argc, char* argv[])
         if (!is_paused) t += (float)dt;
 
         test_pattern(t, test_sprite_h);
+
+        corvid_rec_update((float)dt);
 
         SDL_Surface* screen = corvid_get_screen_surface();
         SDL_LockSurface(screen);
