@@ -27,16 +27,36 @@
  *	http://www.cs.cornell.edu/dali/api/mpegvideo-c.html
  * */
 
+// Converted from cpp to c
+
 #pragma once
 
 #include <stdio.h>
 
-// To get a header file for this, either cut and paste the header,
-// or create jo_mpeg.h, #define JO_MPEG_HEADER_FILE_ONLY, and
-// then include jo_mpeg.c from it.
+// include jo_mpeg.h anywhere
+// MUST define JO_MPEG_IMPLEMENTATION before one include in one .c/cpp file
+// e.g.
+//
+// -- main.c --
+//
+// #define JO_MPEG_IMPLEMENTATION
+// #include "jo_mpeg.h"
+//
+// -- some_other_file_in_project.c --
+//
+// // safe to use without define
+// #include "jo_mpeg.h"
+//
 
-// Returns false on failure
-extern void jo_write_mpeg(FILE* fp, const unsigned char* rgbx, int width, int height, int fps);
+#ifdef __cpluscplus
+extern "C" {
+#endif
+
+void jo_write_mpeg(FILE* fp, const unsigned char* rgbx, int width, int height, int fps);
+
+#ifdef __cpluscplus
+}
+#endif
 
 #ifdef JO_MPEG_IMPLEMENTATION
 

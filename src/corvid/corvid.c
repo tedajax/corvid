@@ -186,17 +186,45 @@ void corvid_fill_circ(int32_t x, int32_t y, int32_t r, corvid_color color)
     _vbuf_fill_circ(x, y, r, _corvid_get_u32color(color));
 }
 
-void corvid_draw_sprite(sprite_handle sprite_h, int32_t x, int32_t y)
+// void corvid_draw_sprite(sprite_handle sprite_h, int32_t x, int32_t y)
+void corvid_draw_sprite(const sprite_draw_desc* desc)
 {
-    SDL_Surface* surface = get_sprite_surface(sprite_h);
+    if (!desc) {
+        return;
+    }
 
-    SDL_Rect* rect = get_sprite_rect(sprite_h);
+    // clang-format off
+    const float origin_v[SpriteDrawOrigin_Count * 2] = {
+        0.0f, 0.0f,
+        0.5f, 0.0f,
+        1.0f, 0.0f,
+        0.0f, 0.5f,
+        0.5f, 0.5f,
+        1.0f, 0.5f,
+        0.0f, 1.0f,
+        0.5f, 1.0f,
+        1.0f, 1.0f,
+    };
+    // clang-format on
+
+    int origin_idx = desc->origin * 2;
+    float origin_x = origin_v[origin_idx];
+    float origin_y = origin_v[origin_idx + 1];
+
+    SDL_Surface* surface = get_sprite_surface(desc->sprite_h);
+
+    SDL_Rect* rect = get_sprite_rect(desc->sprite_h);
+
+    int width = rect->w;
+    int height = rect->h;
+    int pos_x = desc->pos_x - (int)(origin_x * width);
+    int pos_y = desc->pos_y - (int)(origin_y * height);
 
     SDL_Rect dst_rect = (SDL_Rect){
-        .x = x,
-        .y = y,
-        .w = rect->w,
-        .h = rect->h,
+        .x = pos_x,
+        .y = pos_y,
+        .w = width,
+        .h = height,
     };
 
     SDL_BlitSurface(surface, rect, corvid.screen, &dst_rect);

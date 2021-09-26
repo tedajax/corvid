@@ -1,5 +1,6 @@
 #include "corvid_rec.h"
 #include "corvid.h"
+#include "corvid_time.h"
 #include "jo_mpeg.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
@@ -77,7 +78,6 @@ void corvid_rec_update(float dt)
 
     if (rec.timer <= 0.0f) {
         // record frame
-        printf("[corvid_rec] recorded frame\n");
         SDL_Surface* frame = rec.frames[rec.tail].frame;
         size_t size = frame->w * frame->h * frame->format->BytesPerPixel;
         const SDL_Surface* screen = corvid_get_screen_surface();
@@ -112,13 +112,28 @@ void corvid_rec_reset()
     rec.timer = 0.0f;
 }
 
+uint32_t _rbuf_size()
+{
+    uint32_t idx = rec.head;
+    uint32_t count = 0;
+    while (idx != rec.tail) {
+        idx = next_frame(idx);
+        ++count;
+    }
+    return count;
+}
+
 void corvid_rec_write_video(const char* filename)
 {
     if (rec.head == rec.tail) {
         return;
     }
 
-    printf("[corvid_rec] writing recording to %s\n", filename);
+    uint32_t _sz = _rbuf_size();
+    float sec = (float)_sz / rec.frames_per_second;
+
+    printf(
+        "[corvid_rec] writing recording of %d frames (%0.2f seconds) to %s\n", _sz, sec, filename);
 
     FILE* file = fopen(filename, "wb");
 
@@ -138,4 +153,6 @@ void corvid_rec_write_video(const char* filename)
     SDL_FreeSurface(upscale);
 
     fclose(file);
+
+    corvid_time_skip_time_since_last_update();
 }

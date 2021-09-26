@@ -9,7 +9,7 @@ enum {
     k_max_sprites = 128,
 };
 
-const sprite_handle k_invalid = {0};
+static const sprite_handle k_invalid = {0};
 
 struct sprite {
     SDL_Surface* surface;
@@ -17,14 +17,14 @@ struct sprite {
     stbi_uc* data;
 };
 
-struct sprite sprites[k_max_sprites + 1] = {0};
-sprite_handle handles[k_max_sprites + 1] = {0};
+static struct sprite sprites[k_max_sprites + 1] = {0};
+static sprite_handle handles[k_max_sprites + 1] = {0};
 
 sprite_handle _alloc_sprite()
 {
-    for (int i = 1; i <= k_max_sprites; ++i) {
+    for (uint32_t i = 1; i <= k_max_sprites; ++i) {
         if (!sprite_handle_is_valid(handles[i])) {
-            handles[i].handle = (uint32_t)i;
+            handles[i].handle = i;
             return handles[i];
         }
     }

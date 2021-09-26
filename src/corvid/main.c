@@ -1,5 +1,7 @@
 #include "corvid.h"
 #include "corvid_rec.h"
+#include "corvid_time.h"
+#include "corvid_timers.h"
 #include "tx_rand.h"
 #include <SDL2/SDL.h>
 #include <stdbool.h>
@@ -11,7 +13,13 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-void test_pattern(float t, sprite_handle spr);
+void test_pattern(sprite_handle spr);
+
+struct fps_display {
+    int32_t frames_this_sec;
+    SDL_Window* window;
+};
+void update_fps_display_action(void* param);
 
 int main(int argc, char* argv[])
 {
@@ -21,6 +29,7 @@ int main(int argc, char* argv[])
     SDL_Texture* screen_tex = NULL;
 
     corvid_init(NULL);
+    corvid_time_init();
     corvid_rec_init(NULL);
     sprite_handle test_sprite_h = load_image_as_sprite("assets/test00.png");
 
@@ -28,17 +37,17 @@ int main(int argc, char* argv[])
 
     screen_tex = SDL_CreateTextureFromSurface(renderer, corvid_get_screen_surface());
 
-    float t = 0.0f;
-    double dt = 0.0;
-    uint64_t last_counter = SDL_GetPerformanceCounter();
-    int32_t fps = 0;
-    int32_t frames_this_sec = 0;
-    double second_timer = 1.0;
+    struct fps_display fps_display = (struct fps_display){.window = window};
 
-    static float ang = 0.0f;
+    corvid_timer_create(&(corvid_timer_desc){
+        .action = update_fps_display_action,
+        .delay_sec = 0.25f,
+        .interval_sec = 0.25f,
+        .parameter = &fps_display,
+        .repeat_count = -1,
+    });
+
     corvid_color clear_color = 0;
-
-    bool is_paused = false;
 
     bool should_run = true;
     while (should_run) {
@@ -53,47 +62,24 @@ int main(int argc, char* argv[])
                 case SDL_SCANCODE_ESCAPE:
                     should_run = false;
                     break;
-                case SDL_SCANCODE_P:
-                    is_paused = !is_paused;
-                    break;
-                case SDL_SCANCODE_LEFT:
-                    t -= 1.0f / 144.0f;
-                    break;
-                case SDL_SCANCODE_RIGHT:
-                    t += 1.0f / 144.0f;
-                    break;
                 case SDL_SCANCODE_F9:
-                    corvid_rec_write_video("assets/test.mpg");
+                    corvid_rec_write_video("test.mpg");
                     break;
                 }
                 break;
             }
         }
 
-        uint64_t counter = SDL_GetPerformanceCounter();
-        uint64_t frequency = SDL_GetPerformanceFrequency();
+        corvid_time_new_frame();
+        corvid_update_timers();
 
-        uint64_t delta_nano = (counter - last_counter) * 1000000000 / frequency;
-        last_counter = counter;
-        dt = (double)delta_nano / 1000000000.0;
+        const corvid_time* time = corvid_get_time();
 
-        second_timer -= dt;
-        if (second_timer <= 0.0) {
-            second_timer += 1.0;
-            fps = frames_this_sec;
-            frames_this_sec = 0;
-            char buf[64];
-            snprintf(buf, 64, "corvid (FPS: %d)", fps);
-            SDL_SetWindowTitle(window, buf);
-        }
+        fps_display.frames_this_sec++;
 
-        ++frames_this_sec;
+        test_pattern(test_sprite_h);
 
-        if (!is_paused) t += (float)dt;
-
-        test_pattern(t, test_sprite_h);
-
-        corvid_rec_update((float)dt);
+        corvid_rec_update((float)time->delta_time_unscaled);
 
         SDL_Surface* screen = corvid_get_screen_surface();
         SDL_LockSurface(screen);
@@ -105,6 +91,7 @@ int main(int argc, char* argv[])
         SDL_RenderPresent(renderer);
     }
 
+    corvid_rec_term();
     corvid_term();
 
     SDL_DestroyRenderer(renderer);
@@ -113,8 +100,20 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void test_pattern(float t, sprite_handle spr)
+void update_fps_display_action(void* param)
 {
+    struct fps_display* p = (struct fps_display*)param;
+    int32_t frames_this_sec = p->frames_this_sec * 4;
+    p->frames_this_sec = 0;
+    char buf[64];
+    snprintf(buf, 64, "corvid (FPS: %d)", frames_this_sec);
+    SDL_SetWindowTitle(p->window, buf);
+}
+
+void test_pattern(sprite_handle spr)
+{
+    float t = (float)corvid_get_time()->elapsed_time;
+
     corvid_clear(0);
 #if 1
     for (int i = 0; i < 32; ++i) {
@@ -170,6 +169,22 @@ void test_pattern(float t, sprite_handle spr)
     for (int32_t i = 0; i < 16; ++i) {
         int32_t sx = (i % 4) * 16;
         int32_t sy = (i / 4) * 16;
-        corvid_draw_sprite(spr, sx, sy);
+        corvid_draw_sprite(&(sprite_draw_desc){
+            .sprite_h = spr,
+            .pos_x = sx,
+            .pos_y = sy,
+        });
+    }
+
+    for (int32_t i = 0; i < SpriteDrawOrigin_Count; ++i) {
+        int32_t sx = 160 + (i % 3) * 32;
+        int32_t sy = 120 + (i / 3) * 32;
+        corvid_line_rect(sx - 16, sy - 16, sx + 16, sy + 16, 7);
+        corvid_draw_sprite(&(sprite_draw_desc){
+            .sprite_h = spr,
+            .pos_x = sx,
+            .pos_y = sy,
+            .origin = i,
+        });
     }
 }
